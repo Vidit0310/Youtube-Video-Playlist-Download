@@ -8,6 +8,10 @@ def get_playlist_links(playlist_url):
         'extract_flat': True,
         'force_generic_extractor': True,
         'simulate': True,
+
+        # To start download download from a particular number  
+        # 'playliststart': 91, 
+
     }
 
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
@@ -53,7 +57,8 @@ def Download_Video(link):
     print("Downloaded")
 
 os.makedirs('videos', exist_ok=True)
-# Example usage:
+
+# Main 
 playlist_url = input("Enter playlist or video link:\n")
 if 'playlist' in playlist_url:
     video_links = get_playlist_links(playlist_url)
@@ -64,6 +69,5 @@ if 'playlist' in playlist_url:
 else:
     Download_Video(playlist_url)
 
-# Create the 'videos' folder outside the loop
 
 
