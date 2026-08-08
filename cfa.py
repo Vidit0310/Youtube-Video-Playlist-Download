@@ -1,37 +1,126 @@
 import subprocess
 import os
 
-def get_video_formats(url, cookies_file):
-    # Run yt-dlp to get the formats available for the video
-    command = ['yt-dlp', '--cookies', cookies_file, '-F', url]
-    result = subprocess.run(command, capture_output=True, text=True)
-    
-    # Print the formats to the console
-    return result.stdout
 
-def download_video(url, cookies_file, output_folder):
-    # Run yt-dlp to download the video in 720p (video format 136 + audio format 140)
-    output_path = os.path.join(output_folder, '%(title)s.%(ext)s')
-    command = ['yt-dlp', '--cookies', cookies_file, '-f', 'bv*[height<=720]+ba/b[height<=720]', '-o', output_path, '--playlist-start', str(start_index), playlist_url]
-    subprocess.run(command)
+def get_video_formats(url):
+    """Show all formats available for a video."""
 
-def download_playlist(playlist_url, cookies_file, output_folder, start_index=1):
-    # Ensure the 'videos' folder exists
+    command = [
+        'yt-dlp',
+        '--js-runtimes', 'node',
+        '--cookies-from-browser', 'firefox',
+        '-F',
+        url
+    ]
+
+    result = subprocess.run(
+        command,
+        capture_output=True,
+        text=True
+    )
+
+    print(result.stdout)
+
+    if result.stderr:
+        print(result.stderr)
+
+
+def download_video(url, output_folder):
+    """Download a single video in the maximum available quality."""
+
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-    
-    # Run yt-dlp to download all videos in the playlist starting from the specified index
-    output_path = os.path.join(output_folder, '%(title)s.%(ext)s')
-    command = ['yt-dlp', '--cookies', cookies_file, '-f', 'bv*[height<=720]+ba/b[height<=720]', '-o', output_path, '--playlist-start', str(start_index), playlist_url]
+
+    output_path = os.path.join(
+        output_folder,
+        '%(title)s.%(ext)s'
+    )
+
+    command = [
+        'yt-dlp',
+
+        # Use Node.js for YouTube JS challenges
+        '--js-runtimes', 'node',
+
+        # Use the logged-in Firefox YouTube account
+        '--cookies-from-browser', 'firefox',
+
+        # Best available video + best available audio
+        '-f', 'bv*+ba/b',
+
+        # Output filename
+        '-o', output_path,
+
+        # Don't overwrite an existing file
+        '--no-overwrites',
+
+        url
+    ]
+
     subprocess.run(command)
 
-# Example usage+
-playlist_url = 'https://youtube.com/playlist?list=PLEXCZVdgvUlCeYQbUwU6TO0kULldTnlfe&si=NNjtUM6JSdX-KXVD'  # Replace with your playlist URL
-cookies_file = 'cookies.txt'  # Path to your cookies.txt file
-output_folder = 'videos'  # Folder where videos will be saved
-start_index = 1  # Start downloading from the 5th video
 
-# set PATH=C:\Users\svidi\OneDrive\Desktop\test\yt downloader\ffmpeg\ffmpeg-7.1-essentials_build\ffmpeg-7.1-essentials_build\bin;%PATH%
+def download_playlist(
+    playlist_url,
+    output_folder,
+    start_index=1
+):
+    """Download playlist videos in maximum available quality."""
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    output_path = os.path.join(
+        output_folder,
+        '%(playlist_index)03d - %(title)s.%(ext)s'
+    )
+
+    command = [
+        'yt-dlp',
+
+        # Use Node.js to solve YouTube JS challenges
+        '--js-runtimes', 'node',
+
+        # Use Firefox's logged-in YouTube account
+        '--cookies-from-browser', 'firefox',
+
+        # Best available video + best available audio
+        '-f', 'bv*+ba/b',
+
+        # Output filename
+        '-o', output_path,
+
+        # Start from specified playlist index
+        '--playlist-start', str(start_index),
+
+        # Keep already downloaded files
+        '--no-overwrites',
+
+        # Remember successfully downloaded videos
+        '--download-archive', 'downloaded.txt',
+
+        playlist_url
+    ]
+
+    subprocess.run(command)
 
 
-download_playlist(playlist_url, cookies_file, output_folder, start_index)
+# ============================================================
+# MAIN
+# ============================================================
+
+playlist_url = (
+    'https://www.youtube.com/playlist?list=PLEXCZVdgvUlCeYQbUwU6TO0kULldTnlfe'
+)
+
+output_folder = 'videos'
+
+# Start from video 1
+start_index = 1
+
+
+download_playlist(
+    playlist_url,
+    output_folder,
+    start_index
+)
